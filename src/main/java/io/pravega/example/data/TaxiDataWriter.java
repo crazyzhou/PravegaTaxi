@@ -8,17 +8,14 @@
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  */
-package io.pravega.example.datainjection;
+package io.pravega.example.data;
 
+import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.CompletableFuture;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import io.pravega.client.ClientFactory;
 import io.pravega.client.admin.StreamManager;
@@ -33,17 +30,17 @@ import io.pravega.client.stream.impl.JavaSerializer;
  */
 public class TaxiDataWriter {
 
-    public final String scope;
-    public final String streamName;
-    public final URI controllerURI;
+    private final String scope;
+    private final String streamName;
+    private final URI controllerURI;
 
-    public HelloWorldWriter(String scope, String streamName, URI controllerURI) {
+    public TaxiDataWriter(String scope, String streamName, URI controllerURI) {
         this.scope = scope;
         this.streamName = streamName;
         this.controllerURI = controllerURI;
     }
 
-    public void run(String routingKey, String message) {
+    public void run(String routingKey, Path path) {
         StreamManager streamManager = StreamManager.create(controllerURI);
         final boolean scopeIsNew = streamManager.createScope(scope);
 
@@ -52,54 +49,30 @@ public class TaxiDataWriter {
                 .build();
         final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
 
-        try (ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
-             EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
-                     new JavaSerializer<String>(),
-                     EventWriterConfig.builder().build())) {
-
-            System.out.format("Writing message: '%s' with routing-key: '%s' to stream '%s / %s'%n",
-                    message, routingKey, scope, streamName);
-            final CompletableFuture writeFuture = writer.writeEvent(routingKey, message);
+        try (Stream<String> stream = Files.lines(path);
+             ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
+             EventStreamWriter<TaxiRide> writer = clientFactory.createEventWriter(streamName,
+                     new JavaSerializer<TaxiRide>(),
+                     EventWriterConfig.builder().build());
+             ) {
+            stream.forEach(line -> {
+                writer.writeEvent(routingKey, TaxiRide.fromString(line));
+                System.out.format("Writing message: '%s' with routing-key: '%s' to stream '%s / %s'%n",
+                        line, routingKey, scope, streamName);
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
-        Options options = getOptions();
-        CommandLine cmd = null;
-        try {
-            cmd = parseCommandLineArgs(options, args);
-        } catch (ParseException e) {
-            System.out.format("%s.%n", e.getMessage());
-            final HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("HelloWorldWriter", options);
-            System.exit(1);
-        }
+        final String scope = "test-project";
+        final String streamName = "taxidata";
+        final URI controllerURI = URI.create("localhost:9090");
+        final Path path = Paths.get("test.csv");
+        TaxiDataWriter writer = new TaxiDataWriter(scope, streamName, controllerURI);
 
-        final String scope = cmd.getOptionValue("scope") == null ? Constants.DEFAULT_SCOPE : cmd.getOptionValue("scope");
-        final String streamName = cmd.getOptionValue("name") == null ? Constants.DEFAULT_STREAM_NAME : cmd.getOptionValue("name");
-        final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
-        final URI controllerURI = URI.create(uriString);
-
-        HelloWorldWriter hww = new HelloWorldWriter(scope, streamName, controllerURI);
-
-        final String routingKey = cmd.getOptionValue("routingKey") == null ? Constants.DEFAULT_ROUTING_KEY : cmd.getOptionValue("routingKey");
-        final String message = cmd.getOptionValue("message") == null ? Constants.DEFAULT_MESSAGE : cmd.getOptionValue("message");
-        hww.run(routingKey, message);
-    }
-
-    private static Options getOptions() {
-        final Options options = new Options();
-        options.addOption("s", "scope", true, "The scope name of the stream to read from.");
-        options.addOption("n", "name", true, "The name of the stream to read from.");
-        options.addOption("u", "uri", true, "The URI to the controller in the form tcp://host:port");
-        options.addOption("r", "routingKey", true, "The routing key of the message to write.");
-        options.addOption("m", "message", true, "The message to write.");
-        return options;
-    }
-
-    private static CommandLine parseCommandLineArgs(Options options, String[] args) throws ParseException {
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-        return cmd;
+        final String routingKey = "taxidata";
+        writer.run(routingKey, path);
     }
 }
