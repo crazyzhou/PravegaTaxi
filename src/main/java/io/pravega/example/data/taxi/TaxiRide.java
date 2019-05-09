@@ -1,4 +1,4 @@
-package io.pravega.example.data;
+package io.pravega.example.data.taxi;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;

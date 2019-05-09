@@ -1,4 +1,4 @@
-package io.pravega.example.data;
+package io.pravega.example.data.taxi;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;

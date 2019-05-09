@@ -10,37 +10,29 @@ group 'io.pravega.examples'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
+mainClassName = "io.pravega.example.process.WindowAverage"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    // Note that we must include the Elasticsearch client early in the classpath to avoid Netty version conflicts.
-    // org.apache.flink:flink-runtime_2.11:1.3.1 includes io.netty:netty-all:4.0.27.Final which is too old.
-    compile "io.pravega:pravega-client:${pravegaVersion}",
-            "io.pravega:pravega-common:${pravegaVersion}",
-            "commons-cli:commons-cli:1.4"
+    compile "io.pravega:pravega-client:${pravegaVersion}"
     compile "org.apache.flink:flink-java:${flinkVersion}"
     compile "org.apache.flink:flink-clients_2.11:${flinkVersion}"
-    compile "org.apache.flink:flink-table_2.11:${flinkVersion}"
     compile "org.apache.flink:flink-streaming-java_2.11:${flinkVersion}"
-    compile "org.apache.flink:flink-streaming-scala_2.11:${flinkVersion}"
+    compile "org.apache.flink:flink-table_2.11:${flinkVersion}"
     compile "org.apache.flink:flink-ml_2.11:${flinkVersion}"
-    compile "org.slf4j:slf4j-api:1.6.6"
-    compile "ch.qos.logback:logback-classic:1.2.3"
-    compile "ch.qos.logback:logback-core:1.2.3"
-    compile "net.logstash.logback:logstash-logback-encoder:4.11"
     compile "io.pravega:pravega-connectors-flink_2.11:${pravegaFlinkConnectorVersion}"
-    compile "io.pravega:pravega-client:${pravegaVersion}"
+}
 
-    // common-library dependencies
-    compile "com.google.guava:guava:20.0"
-    compile "org.xerial:sqlite-jdbc:3.20.0"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
+jar {
+    zip64 true
+    manifest {
+        attributes "Main-Class": mainClassName
+    }
 
-    testCompile "org.apache.flink:flink-test-utils_2.11:${flinkVersion}"
-    testCompile group: "junit", name: "junit", version: "4.11"
-
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
