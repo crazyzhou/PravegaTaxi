@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
-public class WindowAverage {
+public class SocketWindowAverage {
 
     public static void main(String[] args) throws Exception{
         // initialize the Flink execution environment
@@ -30,7 +30,7 @@ public class WindowAverage {
         dataStream.print();
 
         // execute within the Flink environment
-        env.execute("WindowAverage");
+        env.execute("SocketWindowAverage");
     }
 
     private static class MyMapper implements MapFunction<String, Double> {

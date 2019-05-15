@@ -10,7 +10,7 @@ group 'io.pravega.examples'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
-mainClassName = "io.pravega.example.process.WindowAverage"
+mainClassName = "io.pravega.example.process.SocketWindowAverage"
 
 repositories {
     mavenCentral()
