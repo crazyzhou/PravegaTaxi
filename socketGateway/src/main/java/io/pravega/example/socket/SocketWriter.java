@@ -1,4 +1,4 @@
-package io.pravega.example.data.socket;
+package io.pravega.example.socket;
 
 import io.pravega.client.ClientFactory;
 import io.pravega.client.admin.StreamManager;

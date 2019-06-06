@@ -1,0 +1,21 @@
+FROM gradle:4.10-jdk8 as GradleBuilder
+
+COPY --chown=gradle:gradle gradle.properties /home/gradle/src/gradle.properties
+COPY --chown=gradle:gradle socketGateway /home/gradle/src/socketGateway
+
+WORKDIR /home/gradle/src
+
+ENV GRADLE_USER_HOME=/home/gradle
+RUN gradle --no-daemon :socketGateway:installDist --info --stacktrace
+
+#======
+FROM openjdk:8-jre
+
+ENV APP_NAME socketGateway
+ENV APP_HOME /opt/$APP_NAME
+
+ENV pravega_client_auth_method=Bearer
+ENV pravega_client_auth_loadDynamic=true
+
+COPY --from=GradleBuilder /home/gradle/src/socketGateway/build/install/$APP_NAME $APP_HOME
+ENTRYPOINT $APP_HOME/bin/$APP_NAME
