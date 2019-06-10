@@ -30,7 +30,7 @@ public class StraightOutput {
         ParameterTool params = ParameterTool.fromArgs(args);
         int sensorNum = params.getInt("num", 2);
         int duration = params.getInt("duration", -1);
-        int speed = params.getInt("speed", 1);
+        int speed = params.getInt("speed", 1000);
         RandomSensorSource source = new RandomSensorSource(sensorNum, duration, speed);
 
         DataStream<Tuple2<Integer, Double>> dataStream = env

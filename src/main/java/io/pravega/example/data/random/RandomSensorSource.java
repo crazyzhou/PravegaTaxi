@@ -32,7 +32,7 @@ public class RandomSensorSource implements SourceFunction<Tuple2<Integer, Double
         long startTime = System.currentTimeMillis();
         Random random = new Random();
 
-        while (System.currentTimeMillis() < startTime + duration * 1000) {
+        while (duration < 0 || System.currentTimeMillis() < startTime + duration * 1000) {
             Thread.sleep(servingSpeed);
             int index = random.nextInt(sensorNum);
             Double value = random.nextDouble();
